@@ -7,7 +7,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: "student" | "admin" | null;
-  signUp: (email: string, password: string, role: "student" | "admin") => Promise<{ error: any }>;
+  userName: string | null;
+  signUp: (email: string, password: string, role: "student" | "admin", fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   userRole: null,
+  userName: null,
   signUp: async () => ({ error: null }),
   signIn: async () => ({ error: null }),
   signOut: async () => {},
@@ -29,6 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<"student" | "admin" | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -41,9 +44,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session?.user) {
           setTimeout(() => {
             fetchUserRole(session.user.id);
+            fetchUserName(session.user.id);
           }, 0);
         } else {
           setUserRole(null);
+          setUserName(null);
         }
       }
     );
@@ -54,6 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (session?.user) {
         fetchUserRole(session.user.id);
+        fetchUserName(session.user.id);
       } else {
         setLoading(false);
       }
@@ -75,7 +81,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(false);
   };
 
-  const signUp = async (email: string, password: string, role: "student" | "admin") => {
+  const fetchUserName = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!error && data) {
+      setUserName(data.full_name);
+    }
+  };
+
+  const signUp = async (email: string, password: string, role: "student" | "admin", fullName: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { data, error } = await supabase.auth.signUp({
@@ -94,6 +112,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (roleError) {
         return { error: roleError };
       }
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({ user_id: data.user.id, full_name: fullName });
+      
+      if (profileError) {
+        return { error: profileError };
+      }
     }
 
     return { error };
@@ -110,11 +136,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setUserRole(null);
+    setUserName(null);
     navigate("/auth");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, userRole, signUp, signIn, signOut, loading }}>
+    <AuthContext.Provider value={{ user, session, userRole, userName, signUp, signIn, signOut, loading }}>
       {children}
     </AuthContext.Provider>
   );

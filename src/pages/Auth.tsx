@@ -8,14 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { z } from "zod";
+import bridgeonLogo from "@/assets/bridgeon-logo.jpg";
 
-const emailSchema = z.string().email("Please enter a valid email address");
-const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+  const emailSchema = z.string().email("Please enter a valid email address");
+  const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+  const nameSchema = z.string().min(2, "Name must be at least 2 characters");
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [selectedRole, setSelectedRole] = useState<"student" | "admin">("student");
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
@@ -46,6 +49,15 @@ const Auth = () => {
         return;
       }
 
+      if (!isLogin) {
+        const nameValidation = nameSchema.safeParse(fullName);
+        if (!nameValidation.success) {
+          toast.error(nameValidation.error.errors[0].message);
+          setLoading(false);
+          return;
+        }
+      }
+
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
@@ -55,7 +67,7 @@ const Auth = () => {
           navigate("/");
         }
       } else {
-        const { error } = await signUp(email, password, selectedRole);
+        const { error } = await signUp(email, password, selectedRole, fullName);
         if (error) {
           if (error.message.includes("already registered")) {
             toast.error("This email is already registered. Please sign in instead.");
@@ -77,7 +89,10 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-background p-4">
       <Card className="w-full max-w-md border-border/50 shadow-lg animate-fade-in">
-        <CardHeader className="space-y-2">
+        <CardHeader className="space-y-3">
+          <div className="flex justify-center">
+            <img src={bridgeonLogo} alt="Bridgeon Logo" className="h-16 w-16 object-contain" />
+          </div>
           <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Bridgeon Problem Portal
           </CardTitle>
@@ -130,6 +145,18 @@ const Auth = () => {
             
             <TabsContent value="signup">
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    placeholder="John Doe"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    className="transition-all focus:ring-2 focus:ring-primary"
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <Input
