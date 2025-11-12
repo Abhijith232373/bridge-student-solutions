@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, LogOut, FileText, Shield, AlertTriangle } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import StudentDashboard from "./StudentDashboard";
 import AdminDashboard from "./AdminDashboard";
 import bridgeonLogo from "@/assets/bridgeon-logo.jpg";
@@ -31,32 +32,41 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={bridgeonLogo} alt="Bridgeon Logo" className="h-10 w-10 object-contain" />
-            <div>
-              <h1 className="text-xl font-bold">Bridgeon Portal</h1>
-              <p className="text-xs text-muted-foreground">
-                {userRole === "admin" ? "Admin Dashboard" : "Student Dashboard"}
-              </p>
+    <div className="min-h-screen transition-colors duration-300">
+      <header className="border-b-2 border-border bg-card/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-3 md:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <img 
+                src={bridgeonLogo} 
+                alt="Bridgeon Logo" 
+                className="h-8 w-8 sm:h-10 sm:w-10 object-contain rounded-md flex-shrink-0" 
+              />
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg md:text-xl font-bold truncate">Bridgeon Portal</h1>
+                <p className="text-xs text-muted-foreground hidden xs:block">
+                  {userRole === "admin" ? "Admin Dashboard" : "Student Dashboard"}
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-muted-foreground hidden sm:block">
-              <span className="font-medium text-foreground">{userName || user.email}</span>
-              <span className="mx-2">•</span>
-              <span className="capitalize">{userRole}</span>
+            
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="text-xs sm:text-sm text-muted-foreground hidden md:block">
+                <span className="font-medium text-foreground">{userName || user.email}</span>
+                <span className="mx-2">•</span>
+                <span className="capitalize">{userRole}</span>
+              </div>
+              <ThemeToggle />
+              <Button 
+                variant="outline" 
+                onClick={signOut}
+                size="sm"
+                className="gap-1 sm:gap-2 smooth-transition hover:scale-105 border-2"
+              >
+                <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </Button>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={signOut}
-              className="gap-2 transition-all hover:scale-[1.02]"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
           </div>
         </div>
       </header>
@@ -67,18 +77,18 @@ const Index = () => {
         ) : userRole === "student" ? (
           <StudentDashboard />
         ) : (
-          <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-background via-secondary/10 to-background">
-            <Card className="max-w-md w-full border-destructive/50 shadow-lg animate-scale-in">
-              <CardHeader className="text-center">
+          <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-background via-secondary/10 to-background">
+            <Card className="max-w-md w-full border-2 border-destructive/50 shadow-xl animate-scale-in">
+              <CardHeader className="text-center p-4 sm:p-6">
                 <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
                   <AlertTriangle className="h-6 w-6 text-destructive" />
                 </div>
-                <CardTitle className="text-2xl">Access Denied</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xl sm:text-2xl">Access Denied</CardTitle>
+                <CardDescription className="text-sm">
                   You don't have permission to access this page
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center space-y-4">
+              <CardContent className="text-center space-y-4 p-4 sm:p-6 pt-0">
                 <p className="text-sm text-muted-foreground">
                   Your account doesn't have the required role to view this content.
                   Please contact an administrator if you believe this is an error.
@@ -86,7 +96,7 @@ const Index = () => {
                 <Button 
                   onClick={signOut}
                   variant="outline"
-                  className="w-full smooth-transition"
+                  className="w-full smooth-transition border-2 hover:scale-105"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out

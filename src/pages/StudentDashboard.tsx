@@ -123,34 +123,34 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-background p-6">
-      <div className="max-w-6xl mx-auto space-y-6 animate-fade-in">
-        <Card className="border-border/50 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Send className="h-6 w-6 text-primary" />
-              Submit a Problem
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-background p-4 sm:p-6 transition-colors duration-300">
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
+        <Card className="border-2 border-border shadow-lg hover:shadow-xl smooth-transition">
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
+              <Send className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+              <span>Submit a Problem</span>
             </CardTitle>
-            <CardDescription>Describe your issue and we'll help resolve it</CardDescription>
+            <CardDescription className="text-sm">Describe your issue and we'll help resolve it</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6 pt-0">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Problem Title</Label>
+                <Label htmlFor="title" className="text-sm font-medium">Problem Title</Label>
                 <Input
                   id="title"
                   placeholder="Brief description of the problem"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  className="transition-all focus:ring-2 focus:ring-primary"
+                  className="border-2 smooth-transition focus:ring-2 focus:ring-primary/50 hover:border-primary/40"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category" className="text-sm font-medium">Category</Label>
                 <Select value={category} onValueChange={setCategory} required>
-                  <SelectTrigger className="transition-all focus:ring-2 focus:ring-primary">
+                  <SelectTrigger className="border-2 smooth-transition focus:ring-2 focus:ring-primary/50 hover:border-primary/40">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -164,7 +164,7 @@ const StudentDashboard = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Detailed Description</Label>
+                <Label htmlFor="description" className="text-sm font-medium">Detailed Description</Label>
                 <Textarea
                   id="description"
                   placeholder="Please provide as much detail as possible about your problem"
@@ -172,13 +172,13 @@ const StudentDashboard = () => {
                   onChange={(e) => setDescription(e.target.value)}
                   required
                   rows={6}
-                  className="transition-all focus:ring-2 focus:ring-primary resize-none"
+                  className="border-2 smooth-transition focus:ring-2 focus:ring-primary/50 resize-none hover:border-primary/40"
                 />
               </div>
 
               <Button 
                 type="submit" 
-                className="w-full transition-all hover:scale-[1.02]" 
+                className="w-full smooth-transition hover:scale-105 shadow-md hover:shadow-lg" 
                 disabled={loading}
               >
                 {loading ? (
@@ -197,15 +197,15 @@ const StudentDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <FileText className="h-6 w-6 text-primary" />
-              My Submitted Problems
+        <Card className="border-2 border-border shadow-lg hover:shadow-xl smooth-transition">
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
+              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+              <span>My Submitted Problems</span>
             </CardTitle>
-            <CardDescription>Track the status of your submissions</CardDescription>
+            <CardDescription className="text-sm">Track the status of your submissions</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6 pt-0">
             {fetchingProblems ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -217,25 +217,25 @@ const StudentDashboard = () => {
                 {problems.map((problem) => (
                   <Card 
                     key={problem.id} 
-                    className="border-border/30 transition-all hover:shadow-md hover:border-primary/30"
+                    className="border-2 border-l-4 border-l-primary border-border/50 smooth-transition hover:shadow-lg hover:border-primary/50 hover:-translate-y-1"
                   >
-                    <CardContent className="pt-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg mb-1">{problem.title}</h3>
-                          <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                    <CardContent className="p-4 sm:pt-6 sm:px-6">
+                      <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+                        <div className="flex-1 w-full min-w-0">
+                          <h3 className="font-semibold text-base sm:text-lg mb-1 break-words">{problem.title}</h3>
+                          <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">
                             {problem.description}
                           </p>
                           <div className="flex gap-2 flex-wrap">
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs border-2">
                               {problem.category}
                             </Badge>
-                            <Badge className={`text-xs ${getStatusColor(problem.status)}`}>
+                            <Badge className={`text-xs border ${getStatusColor(problem.status)}`}>
                               {problem.status.replace("_", " ")}
                             </Badge>
                           </div>
                         </div>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap self-start sm:self-auto">
                           {new Date(problem.created_at).toLocaleDateString()}
                         </span>
                       </div>
