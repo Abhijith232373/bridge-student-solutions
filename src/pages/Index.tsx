@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, LogOut, FileText, Shield } from "lucide-react";
+import { Loader2, LogOut, FileText, Shield, AlertTriangle } from "lucide-react";
 import StudentDashboard from "./StudentDashboard";
 import AdminDashboard from "./AdminDashboard";
 import bridgeonLogo from "@/assets/bridgeon-logo.jpg";
@@ -61,7 +61,41 @@ const Index = () => {
         </div>
       </header>
 
-      {userRole === "admin" ? <AdminDashboard /> : <StudentDashboard />}
+      <main className="animate-fade-in">
+        {userRole === "admin" ? (
+          <AdminDashboard />
+        ) : userRole === "student" ? (
+          <StudentDashboard />
+        ) : (
+          <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-background via-secondary/10 to-background">
+            <Card className="max-w-md w-full border-destructive/50 shadow-lg animate-scale-in">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
+                <CardTitle className="text-2xl">Access Denied</CardTitle>
+                <CardDescription>
+                  You don't have permission to access this page
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Your account doesn't have the required role to view this content.
+                  Please contact an administrator if you believe this is an error.
+                </p>
+                <Button 
+                  onClick={signOut}
+                  variant="outline"
+                  className="w-full smooth-transition"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </main>
     </div>
   );
 };

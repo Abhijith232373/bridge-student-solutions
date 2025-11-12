@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Loader2, Shield, Filter } from "lucide-react";
+import { Loader2, Shield, Filter, Search } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Problem {
@@ -22,6 +23,8 @@ const AdminDashboard = () => {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -88,9 +91,16 @@ const AdminDashboard = () => {
     }
   };
 
-  const filteredProblems = filterStatus === "all" 
-    ? problems 
-    : problems.filter(p => p.status === filterStatus);
+  const filteredProblems = problems
+    .filter(p => filterStatus === "all" || p.status === filterStatus)
+    .filter(p => filterCategory === "all" || p.category === filterCategory)
+    .filter(p => 
+      searchQuery === "" || 
+      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+  const uniqueCategories = Array.from(new Set(problems.map(p => p.category)));
 
   const stats = {
     total: problems.length,
@@ -102,29 +112,29 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-background p-6">
       <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
-        <Card className="border-border/50 shadow-lg bg-gradient-to-br from-card to-card/50">
+        <Card className="border-border/50 shadow-lg bg-gradient-to-br from-card to-card/50 hover-lift smooth-transition">
           <CardHeader>
-            <CardTitle className="text-3xl flex items-center gap-2">
+            <CardTitle className="text-3xl flex items-center gap-2 animate-slide-up">
               <Shield className="h-8 w-8 text-primary" />
               Admin Dashboard
             </CardTitle>
-            <CardDescription>Manage and resolve student problems</CardDescription>
+            <CardDescription className="animate-slide-up">Manage and resolve student problems</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg bg-secondary/50 border border-border/50">
+              <div className="p-4 rounded-lg bg-secondary/50 border border-border/50 hover-lift smooth-transition animate-scale-in" style={{animationDelay: '0.1s'}}>
                 <p className="text-sm text-muted-foreground">Total Problems</p>
                 <p className="text-2xl font-bold text-foreground">{stats.total}</p>
               </div>
-              <div className="p-4 rounded-lg bg-warning/5 border border-warning/20">
+              <div className="p-4 rounded-lg bg-warning/5 border border-warning/20 hover-lift smooth-transition animate-scale-in" style={{animationDelay: '0.2s'}}>
                 <p className="text-sm text-warning">Pending</p>
                 <p className="text-2xl font-bold text-warning">{stats.pending}</p>
               </div>
-              <div className="p-4 rounded-lg bg-info/5 border border-info/20">
+              <div className="p-4 rounded-lg bg-info/5 border border-info/20 hover-lift smooth-transition animate-scale-in" style={{animationDelay: '0.3s'}}>
                 <p className="text-sm text-info">In Progress</p>
                 <p className="text-2xl font-bold text-info">{stats.in_progress}</p>
               </div>
-              <div className="p-4 rounded-lg bg-success/5 border border-success/20">
+              <div className="p-4 rounded-lg bg-success/5 border border-success/20 hover-lift smooth-transition animate-scale-in" style={{animationDelay: '0.4s'}}>
                 <p className="text-sm text-success">Resolved</p>
                 <p className="text-2xl font-bold text-success">{stats.resolved}</p>
               </div>
@@ -132,21 +142,42 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 shadow-lg">
+        <Card className="border-border/50 shadow-lg smooth-transition hover-lift">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl">All Submissions</CardTitle>
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xl mb-4">All Submissions</CardTitle>
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search problems..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 smooth-transition focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <div className="flex gap-2">
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
+                  <SelectTrigger className="w-[150px] smooth-transition">
+                    <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="in_progress">In Progress</SelectItem>
                     <SelectItem value="resolved">Resolved</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-[150px] smooth-transition">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {uniqueCategories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -161,10 +192,11 @@ const AdminDashboard = () => {
               <p className="text-center text-muted-foreground py-12">No problems found</p>
             ) : (
               <div className="space-y-4">
-                {filteredProblems.map((problem) => (
+                {filteredProblems.map((problem, index) => (
                   <Card 
                     key={problem.id} 
-                    className="border-border/30 transition-all hover:shadow-md hover:border-primary/30"
+                    className="border-border/30 hover-lift smooth-transition animate-slide-up"
+                    style={{animationDelay: `${index * 0.05}s`}}
                   >
                     <CardContent className="pt-6">
                       <div className="space-y-4">
