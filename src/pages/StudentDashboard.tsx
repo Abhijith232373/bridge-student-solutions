@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Send, FileText } from "lucide-react";
+import { Loader2, Send, FileText, AlertCircle } from "lucide-react";
 import { z } from "zod";
 
 const problemSchema = z.object({
@@ -24,6 +25,7 @@ interface Problem {
   description: string;
   category: string;
   status: string;
+  is_urgent: boolean;
   created_at: string;
 }
 
@@ -32,6 +34,7 @@ const StudentDashboard = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [isUrgent, setIsUrgent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [problems, setProblems] = useState<Problem[]>([]);
   const [fetchingProblems, setFetchingProblems] = useState(true);
@@ -90,16 +93,21 @@ const StudentDashboard = () => {
         title: title.trim(),
         description: description.trim(),
         category,
+        is_urgent: isUrgent,
         submitted_by: user?.id,
       });
 
       if (error) {
         toast.error("Failed to submit problem");
       } else {
-        toast.success("Problem submitted successfully!");
+        const message = isUrgent 
+          ? "🚨 Urgent problem submitted! Admin will be notified immediately."
+          : "Problem submitted successfully!";
+        toast.success(message);
         setTitle("");
         setDescription("");
         setCategory("");
+        setIsUrgent(false);
         fetchProblems();
       }
     } catch (error) {
@@ -176,7 +184,28 @@ const StudentDashboard = () => {
                 />
               </div>
 
-              <Button 
+              <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-destructive/30 bg-destructive/5 smooth-transition hover:border-destructive/50">
+                <Checkbox
+                  id="urgent"
+                  checked={isUrgent}
+                  onCheckedChange={(checked) => setIsUrgent(checked as boolean)}
+                  className="border-2"
+                />
+                <div className="flex items-center gap-2 flex-1">
+                  <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                  <Label 
+                    htmlFor="urgent" 
+                    className="text-sm font-medium cursor-pointer leading-tight"
+                  >
+                    Mark as <span className="text-destructive font-bold">URGENT/EMERGENCY</span>
+                    <span className="block text-xs text-muted-foreground font-normal mt-1">
+                      Admin will be notified immediately for quick resolution
+                    </span>
+                  </Label>
+                </div>
+              </div>
+
+              <Button
                 type="submit" 
                 className="w-full smooth-transition hover:scale-105 shadow-md hover:shadow-lg" 
                 disabled={loading}
@@ -221,20 +250,30 @@ const StudentDashboard = () => {
                   >
                     <CardContent className="p-4 sm:pt-6 sm:px-6">
                       <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
-                        <div className="flex-1 w-full min-w-0">
-                          <h3 className="font-semibold text-base sm:text-lg mb-1 break-words">{problem.title}</h3>
-                          <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">
-                            {problem.description}
-                          </p>
-                          <div className="flex gap-2 flex-wrap">
-                            <Badge variant="outline" className="text-xs border-2">
-                              {problem.category}
-                            </Badge>
-                            <Badge className={`text-xs border ${getStatusColor(problem.status)}`}>
-                              {problem.status.replace("_", " ")}
-                            </Badge>
+                          <div className="flex-1 w-full min-w-0">
+                            <div className="flex items-start gap-2 mb-1">
+                              {problem.is_urgent && (
+                                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5 animate-pulse" />
+                              )}
+                              <h3 className="font-semibold text-base sm:text-lg break-words">{problem.title}</h3>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">
+                              {problem.description}
+                            </p>
+                            <div className="flex gap-2 flex-wrap">
+                              {problem.is_urgent && (
+                                <Badge className="text-xs border-2 bg-destructive/10 text-destructive border-destructive/30 animate-pulse">
+                                  🚨 URGENT
+                                </Badge>
+                              )}
+                              <Badge variant="outline" className="text-xs border-2">
+                                {problem.category}
+                              </Badge>
+                              <Badge className={`text-xs border ${getStatusColor(problem.status)}`}>
+                                {problem.status.replace("_", " ")}
+                              </Badge>
+                            </div>
                           </div>
-                        </div>
                         <span className="text-xs text-muted-foreground whitespace-nowrap self-start sm:self-auto">
                           {new Date(problem.created_at).toLocaleDateString()}
                         </span>

@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          is_urgent: boolean
           status: string
           submitted_by: string
           title: string
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          is_urgent?: boolean
           status?: string
           submitted_by: string
           title: string
@@ -40,6 +42,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          is_urgent?: boolean
           status?: string
           submitted_by?: string
           title?: string

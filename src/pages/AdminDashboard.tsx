@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Loader2, Shield, Filter, Search } from "lucide-react";
+import { Loader2, Shield, Filter, Search, AlertCircle, Bell } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Problem {
@@ -15,6 +15,7 @@ interface Problem {
   description: string;
   category: string;
   status: string;
+  is_urgent: boolean;
   created_at: string;
   submitted_by: string;
 }
@@ -102,26 +103,53 @@ const AdminDashboard = () => {
 
   const uniqueCategories = Array.from(new Set(problems.map(p => p.category)));
 
+  const urgentProblems = problems.filter(p => p.is_urgent && p.status !== "resolved");
+  
   const stats = {
     total: problems.length,
+    urgent: urgentProblems.length,
     pending: problems.filter(p => p.status === "pending").length,
     in_progress: problems.filter(p => p.status === "in_progress").length,
     resolved: problems.filter(p => p.status === "resolved").length,
   };
+
+  // Sort problems to show urgent ones first
+  const sortedFilteredProblems = [...filteredProblems].sort((a, b) => {
+    if (a.is_urgent && !b.is_urgent) return -1;
+    if (!a.is_urgent && b.is_urgent) return 1;
+    return 0;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-background p-4 sm:p-6 transition-colors duration-300">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
         <Card className="border-2 border-border shadow-xl bg-gradient-to-br from-card to-card/50 hover-lift smooth-transition">
           <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-2xl sm:text-3xl flex items-center gap-2 animate-slide-up">
-              <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
-              <span>Admin Dashboard</span>
-            </CardTitle>
-            <CardDescription className="animate-slide-up text-sm">Manage and resolve student problems</CardDescription>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <CardTitle className="text-2xl sm:text-3xl flex items-center gap-2 animate-slide-up">
+                  <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
+                  <span>Admin Dashboard</span>
+                </CardTitle>
+                <CardDescription className="animate-slide-up text-sm">Manage and resolve student problems</CardDescription>
+              </div>
+              {stats.urgent > 0 && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border-2 border-destructive/30 animate-pulse">
+                  <Bell className="h-5 w-5 text-destructive" />
+                  <span className="text-sm font-bold text-destructive">{stats.urgent} Urgent!</span>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+              <div className="p-3 sm:p-4 rounded-lg bg-destructive/5 border-2 border-destructive/30 shadow-md hover-lift smooth-transition animate-scale-in" style={{animationDelay: '0.05s'}}>
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                  <p className="text-xs sm:text-sm text-destructive font-bold">Urgent</p>
+                </div>
+                <p className="text-xl sm:text-2xl font-bold text-destructive">{stats.urgent}</p>
+              </div>
               <div className="p-3 sm:p-4 rounded-lg bg-secondary/50 border-2 border-border shadow-md hover-lift smooth-transition animate-scale-in" style={{animationDelay: '0.1s'}}>
                 <p className="text-xs sm:text-sm text-muted-foreground">Total Problems</p>
                 <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.total}</p>
@@ -188,25 +216,39 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : filteredProblems.length === 0 ? (
+            ) : sortedFilteredProblems.length === 0 ? (
               <p className="text-center text-muted-foreground py-12">No problems found</p>
             ) : (
               <div className="space-y-4">
-                {filteredProblems.map((problem, index) => (
+                {sortedFilteredProblems.map((problem, index) => (
                   <Card 
                     key={problem.id} 
-                    className="border-2 border-l-4 border-l-primary border-border/50 hover-lift smooth-transition animate-slide-up hover:shadow-xl hover:-translate-y-1"
+                    className={`border-2 border-l-4 ${
+                      problem.is_urgent 
+                        ? 'border-l-destructive border-destructive/50 bg-destructive/5' 
+                        : 'border-l-primary border-border/50'
+                    } hover-lift smooth-transition animate-slide-up hover:shadow-xl hover:-translate-y-1`}
                     style={{animationDelay: `${index * 0.05}s`}}
                   >
                     <CardContent className="p-4 sm:pt-6 sm:px-6">
                       <div className="space-y-4">
                         <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
                           <div className="flex-1 w-full min-w-0">
-                            <h3 className="font-semibold text-base sm:text-lg mb-2 break-words">{problem.title}</h3>
+                            <div className="flex items-start gap-2 mb-2">
+                              {problem.is_urgent && (
+                                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5 animate-pulse" />
+                              )}
+                              <h3 className="font-semibold text-base sm:text-lg break-words">{problem.title}</h3>
+                            </div>
                             <p className="text-sm text-muted-foreground mb-3 break-words">
                               {problem.description}
                             </p>
                             <div className="flex gap-2 flex-wrap mb-3">
+                              {problem.is_urgent && (
+                                <Badge className="text-xs border-2 bg-destructive/10 text-destructive border-destructive/30 animate-pulse">
+                                  🚨 URGENT - Needs Immediate Attention
+                                </Badge>
+                              )}
                               <Badge variant="outline" className="text-xs border-2">
                                 {problem.category}
                               </Badge>
