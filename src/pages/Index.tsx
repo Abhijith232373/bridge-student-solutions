@@ -50,11 +50,14 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="text-xs sm:text-sm text-muted-foreground hidden md:block">
-                <span className="font-medium text-foreground">{userName || user.email}</span>
-                <span className="mx-2">•</span>
-                <span className="capitalize">{userRole}</span>
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <div className="hidden md:flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">{userName || "User"}</span>
+                {userRole && (
+                  <span className="px-2 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary border border-primary/20 capitalize">
+                    {userRole}
+                  </span>
+                )}
               </div>
               <ThemeToggle />
               <Button 
