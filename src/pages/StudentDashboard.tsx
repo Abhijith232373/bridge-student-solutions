@@ -12,6 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, Send, FileText, AlertCircle } from "lucide-react";
 import { z } from "zod";
+import { ChatButton } from "@/components/chat/ChatButton";
+import { ChatWindow } from "@/components/chat/ChatWindow";
 
 const problemSchema = z.object({
   title: z.string().trim().min(5, "Title must be at least 5 characters").max(200, "Title too long"),
@@ -38,11 +40,17 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [problems, setProblems] = useState<Problem[]>([]);
   const [fetchingProblems, setFetchingProblems] = useState(true);
+  const [showChat, setShowChat] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [adminId, setAdminId] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     fetchProblems();
+    fetchOrCreateConversation();
+    fetchUnreadCount();
     
-    const channel = supabase
+    const problemsChannel = supabase
       .channel('student-problems')
       .on(
         'postgres_changes',
@@ -58,8 +66,25 @@ const StudentDashboard = () => {
       )
       .subscribe();
 
+    const conversationsChannel = supabase
+      .channel('student-conversations')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations',
+          filter: `student_id=eq.${user?.id}`
+        },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(problemsChannel);
+      supabase.removeChannel(conversationsChannel);
     };
   }, [user]);
 
@@ -74,6 +99,73 @@ const StudentDashboard = () => {
       setProblems(data);
     }
     setFetchingProblems(false);
+  };
+
+  const fetchOrCreateConversation = async () => {
+    if (!user?.id) return;
+
+    // First, get an admin user
+    const { data: adminRole } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin")
+      .limit(1)
+      .single();
+
+    if (adminRole) {
+      setAdminId(adminRole.user_id);
+    }
+
+    // Check if conversation exists
+    const { data: existing } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("student_id", user.id)
+      .maybeSingle();
+
+    if (existing) {
+      setConversationId(existing.id);
+    } else {
+      // Create new conversation
+      const { data: newConv, error } = await supabase
+        .from("conversations")
+        .insert({
+          student_id: user.id,
+          admin_id: adminRole?.user_id || null,
+        })
+        .select()
+        .single();
+
+      if (!error && newConv) {
+        setConversationId(newConv.id);
+      }
+    }
+  };
+
+  const fetchUnreadCount = async () => {
+    if (!user?.id) return;
+
+    const { data } = await supabase
+      .from("conversations")
+      .select("unread_by_student")
+      .eq("student_id", user.id)
+      .maybeSingle();
+
+    if (data) {
+      setUnreadCount(data.unread_by_student || 0);
+    }
+  };
+
+  const handleOpenChat = () => {
+    setShowChat(true);
+    // Reset unread count
+    if (conversationId) {
+      supabase
+        .from("conversations")
+        .update({ unread_by_student: 0 })
+        .eq("id", conversationId)
+        .then(() => setUnreadCount(0));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -286,6 +378,18 @@ const StudentDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Chat Components */}
+      <ChatButton onClick={handleOpenChat} unreadCount={unreadCount} />
+      {showChat && conversationId && adminId && (
+        <ChatWindow
+          conversationId={conversationId}
+          userId={user?.id || ""}
+          otherUserId={adminId}
+          otherUserName="Admin"
+          onClose={() => setShowChat(false)}
+        />
+      )}
     </div>
   );
 };
