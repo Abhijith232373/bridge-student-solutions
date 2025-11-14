@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2, Shield, Filter, Search, AlertCircle, Bell } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChatButton } from "@/components/chat/ChatButton";
+import { ChatWindow } from "@/components/chat/ChatWindow";
+import { ConversationList } from "@/components/chat/ConversationList";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Problem {
   id: string;
@@ -20,18 +24,36 @@ interface Problem {
   submitted_by: string;
 }
 
+interface Conversation {
+  id: string;
+  student_id: string;
+  student_name: string;
+  last_message: string | null;
+  last_message_at: string;
+  unread_by_admin: number;
+}
+
 const AdminDashboard = () => {
+  const { user } = useAuth();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const [showConversationList, setShowConversationList] = useState(false);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [selectedStudentName, setSelectedStudentName] = useState<string>("");
+  const [selectedStudentId, setSelectedStudentId] = useState<string>("");
+  const [totalUnread, setTotalUnread] = useState(0);
 
   useEffect(() => {
     fetchProblems();
+    fetchConversations();
     
-    const channel = supabase
+    const problemsChannel = supabase
       .channel('admin-problems')
       .on(
         'postgres_changes',
@@ -46,8 +68,24 @@ const AdminDashboard = () => {
       )
       .subscribe();
 
+    const conversationsChannel = supabase
+      .channel('admin-conversations')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations'
+        },
+        () => {
+          fetchConversations();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(problemsChannel);
+      supabase.removeChannel(conversationsChannel);
     };
   }, []);
 
@@ -61,6 +99,68 @@ const AdminDashboard = () => {
       setProblems(data);
     }
     setLoading(false);
+  };
+
+  const fetchConversations = async () => {
+    const { data, error } = await supabase
+      .from("conversations")
+      .select(`
+        id,
+        student_id,
+        last_message,
+        last_message_at,
+        unread_by_admin
+      `)
+      .order("last_message_at", { ascending: false });
+
+    if (!error && data) {
+      // Fetch student names
+      const conversationsWithNames = await Promise.all(
+        data.map(async (conv) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("user_id", conv.student_id)
+            .single();
+
+          return {
+            ...conv,
+            student_name: profile?.full_name || "Unknown Student",
+          };
+        })
+      );
+
+      setConversations(conversationsWithNames);
+      setTotalUnread(conversationsWithNames.reduce((sum, conv) => sum + (conv.unread_by_admin || 0), 0));
+    }
+  };
+
+  const handleSelectConversation = (convId: string, studentName: string) => {
+    const conv = conversations.find((c) => c.id === convId);
+    if (conv) {
+      setSelectedConversation(convId);
+      setSelectedStudentName(studentName);
+      setSelectedStudentId(conv.student_id);
+      setShowConversationList(false);
+      setShowChat(true);
+
+      // Reset unread count for this conversation
+      supabase
+        .from("conversations")
+        .update({ unread_by_admin: 0 })
+        .eq("id", convId)
+        .then(() => fetchConversations());
+    }
+  };
+
+  const handleOpenChat = () => {
+    setShowConversationList(true);
+  };
+
+  const handleCloseChat = () => {
+    setShowChat(false);
+    setShowConversationList(false);
+    setSelectedConversation(null);
   };
 
   const updateStatus = async (problemId: string, newStatus: string) => {
@@ -290,6 +390,39 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Chat Components */}
+      <ChatButton onClick={handleOpenChat} unreadCount={totalUnread} />
+      
+      {/* Conversation List */}
+      {showConversationList && !showChat && (
+        <div className="fixed bottom-6 right-6 w-[400px] h-[600px] bg-background border rounded-lg shadow-2xl flex flex-col z-40 animate-slide-in-right sm:max-w-[400px] max-sm:w-[calc(100vw-3rem)] max-sm:h-[calc(100vh-3rem)]">
+          <div className="flex items-center justify-between p-4 border-b bg-background">
+            <h3 className="font-semibold text-foreground">Student Conversations</h3>
+            <button 
+              onClick={handleCloseChat}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span className="text-2xl">×</span>
+            </button>
+          </div>
+          <ConversationList
+            conversations={conversations}
+            onSelectConversation={handleSelectConversation}
+          />
+        </div>
+      )}
+
+      {/* Chat Window */}
+      {showChat && selectedConversation && (
+        <ChatWindow
+          conversationId={selectedConversation}
+          userId={user?.id || ""}
+          otherUserId={selectedStudentId}
+          otherUserName={selectedStudentName}
+          onClose={handleCloseChat}
+        />
+      )}
     </div>
   );
 };
