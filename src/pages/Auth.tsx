@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { z } from "zod";
+import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import bridgeonLogo from "@/assets/bridgeon-logo.jpg";
 
   const emailSchema = z.string().email("Please enter a valid email address");
@@ -21,6 +23,8 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [selectedRole, setSelectedRole] = useState<"student" | "admin">("student");
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -86,6 +90,86 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const emailValidation = emailSchema.safeParse(resetEmail);
+      if (!emailValidation.success) {
+        toast.error(emailValidation.error.errors[0].message);
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/`,
+      });
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Password reset link sent to your email!");
+        setShowForgotPassword(false);
+        setResetEmail("");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-background p-4">
+        <Card className="w-full max-w-md border-border/50 shadow-lg animate-fade-in">
+          <CardHeader className="space-y-3">
+            <div className="flex justify-center">
+              <img src={bridgeonLogo} alt="Bridgeon Logo" className="h-16 w-16 object-contain" />
+            </div>
+            <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Reset Password
+            </CardTitle>
+            <CardDescription className="text-center text-muted-foreground">
+              Enter your email to receive a password reset link
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Send Reset Link
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setResetEmail("");
+                }}
+              >
+                Back to Login
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-background p-4">
       <Card className="w-full max-w-md border-border/50 shadow-lg animate-fade-in">
@@ -133,7 +217,17 @@ const Auth = () => {
                     className="transition-all focus:ring-2 focus:ring-primary"
                   />
                 </div>
-                <Button 
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-sm text-primary hover:text-primary/80 p-0 h-auto"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot password?
+                  </Button>
+                </div>
+                <Button
                   type="submit" 
                   className="w-full transition-all hover:scale-[1.02]" 
                   disabled={loading}

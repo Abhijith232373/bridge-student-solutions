@@ -4,27 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { ProfileSettings } from "@/components/shared/ProfileSettings";
 
 export function SettingsSection() {
   return (
     <div className="space-y-6 max-w-4xl">
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Settings</CardTitle>
-          <CardDescription>Manage your admin profile information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input id="name" placeholder="Enter your name" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="Enter your email" />
-          </div>
-          <Button>Save Changes</Button>
-        </CardContent>
-      </Card>
+      <ProfileSettings />
 
       <Card>
         <CardHeader>
