@@ -2,8 +2,8 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/17a2d016-0d91-49d3-b63c-3ed54b512bb0
-
+**URL**:[ https://lovable.dev/projects/17a2d016-0d91-49d3-b63c-3ed54b512bb0
+](https://bridge-student-solutions.lovable.app)
 ## How can I edit this code?
 
 There are several ways of editing your application.
