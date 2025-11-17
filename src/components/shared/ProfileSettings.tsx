@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Upload, Loader2 } from "lucide-react";
 
 export function ProfileSettings() {
-  const { user, userName } = useAuth();
+  const { user, userName, refreshProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [fullName, setFullName] = useState(userName || "");
@@ -81,6 +81,7 @@ export function ProfileSettings() {
       if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
+      await refreshProfile();
       toast.success("Profile picture updated successfully!");
     } catch (error: any) {
       toast.error(error.message || "Error uploading avatar");
@@ -105,6 +106,7 @@ export function ProfileSettings() {
 
       if (error) throw error;
 
+      await refreshProfile();
       toast.success("Profile updated successfully!");
     } catch (error: any) {
       toast.error(error.message || "Error updating profile");

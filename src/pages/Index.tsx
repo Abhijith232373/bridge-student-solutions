@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, LogOut, FileText, Shield, AlertTriangle } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import StudentDashboard from "./StudentDashboard";
 import AdminDashboard from "./AdminDashboard";
 import bridgeonLogo from "@/assets/bridgeon-logo.jpg";
 
 const Index = () => {
-  const { user, userRole, userName, signOut, loading } = useAuth();
+  const { user, userRole, userName, avatarUrl, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,13 +52,21 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              <div className="hidden md:flex items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">{userName || "User"}</span>
-                {userRole && (
-                  <span className="px-2 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary border border-primary/20 capitalize">
-                    {userRole}
-                  </span>
-                )}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-primary/20 shadow-md">
+                  <AvatarImage src={avatarUrl || undefined} />
+                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                    {userName?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden md:flex flex-col">
+                  <span className="text-sm font-semibold text-foreground">{userName || "User"}</span>
+                  {userRole && (
+                    <span className="text-xs text-muted-foreground capitalize">
+                      {userRole}
+                    </span>
+                  )}
+                </div>
               </div>
               <ThemeToggle />
               <Button 

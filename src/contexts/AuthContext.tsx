@@ -8,9 +8,11 @@ interface AuthContextType {
   session: Session | null;
   userRole: "student" | "admin" | null;
   userName: string | null;
+  avatarUrl: string | null;
   signUp: (email: string, password: string, role: "student" | "admin", fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   loading: boolean;
 }
 
@@ -19,9 +21,11 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   userRole: null,
   userName: null,
+  avatarUrl: null,
   signUp: async () => ({ error: null }),
   signIn: async () => ({ error: null }),
   signOut: async () => {},
+  refreshProfile: async () => {},
   loading: true,
 });
 
@@ -32,6 +36,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<"student" | "admin" | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -44,11 +49,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session?.user) {
           setTimeout(() => {
             fetchUserRole(session.user.id);
-            fetchUserName(session.user.id);
+            fetchUserProfile(session.user.id);
           }, 0);
         } else {
           setUserRole(null);
           setUserName(null);
+          setAvatarUrl(null);
         }
       }
     );
@@ -59,7 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (session?.user) {
         fetchUserRole(session.user.id);
-        fetchUserName(session.user.id);
+        fetchUserProfile(session.user.id);
       } else {
         setLoading(false);
       }
@@ -81,15 +87,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(false);
   };
 
-  const fetchUserName = async (userId: string) => {
+  const fetchUserProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("full_name")
+      .select("full_name, avatar_url")
       .eq("user_id", userId)
       .maybeSingle();
 
     if (!error && data) {
       setUserName(data.full_name);
+      setAvatarUrl(data.avatar_url);
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchUserProfile(user.id);
     }
   };
 
@@ -137,11 +150,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.auth.signOut();
     setUserRole(null);
     setUserName(null);
+    setAvatarUrl(null);
     navigate("/auth");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, userRole, userName, signUp, signIn, signOut, loading }}>
+    <AuthContext.Provider value={{ user, session, userRole, userName, avatarUrl, signUp, signIn, signOut, refreshProfile, loading }}>
       {children}
     </AuthContext.Provider>
   );

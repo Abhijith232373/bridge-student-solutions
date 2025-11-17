@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { LayoutDashboard, FileText, Users, MessageSquare, Settings, BarChart3, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -22,7 +22,7 @@ const menuItems = [
 ];
 
 export function AdminLayout({ children, activeSection, onSectionChange, unreadMessages = 0 }: AdminLayoutProps) {
-  const { userName, signOut } = useAuth();
+  const { userName, avatarUrl, signOut } = useAuth();
 
   return (
     <SidebarProvider>
@@ -63,13 +63,17 @@ export function AdminLayout({ children, activeSection, onSectionChange, unreadMe
           </SidebarContent>
 
           <div className="mt-auto p-4 border-t space-y-2">
-            <div className="flex items-center gap-2 px-2 py-1">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-sm font-semibold text-primary">
+            <div className="flex items-center gap-3 px-2 py-2">
+              <Avatar className="w-10 h-10 border-2 border-primary/20">
+                <AvatarImage src={avatarUrl || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                   {userName?.charAt(0).toUpperCase()}
-                </span>
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">{userName}</p>
+                <p className="text-xs text-muted-foreground">Admin</p>
               </div>
-              <span className="text-sm font-medium truncate">{userName}</span>
             </div>
             <div className="flex items-center gap-2 px-2">
               <ThemeToggle />
