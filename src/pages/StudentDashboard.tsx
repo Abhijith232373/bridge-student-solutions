@@ -14,6 +14,8 @@ import { Loader2, Send, FileText, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { ChatButton } from "@/components/chat/ChatButton";
 import { ChatWindow } from "@/components/chat/ChatWindow";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProfileSettings } from "@/components/shared/ProfileSettings";
 
 const problemSchema = z.object({
   title: z.string().trim().min(5, "Title must be at least 5 characters").max(200, "Title too long"),
@@ -44,6 +46,7 @@ const StudentDashboard = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [adminId, setAdminId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [activeTab, setActiveTab] = useState<"submit" | "myProblems" | "profile">("submit");
 
   useEffect(() => {
     fetchProblems();
@@ -225,7 +228,15 @@ const StudentDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-background p-4 sm:p-6 transition-colors duration-300">
       <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
-        <Card className="border-2 border-border shadow-lg hover:shadow-xl smooth-transition">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="submit">Submit Problem</TabsTrigger>
+            <TabsTrigger value="myProblems">My Problems</TabsTrigger>
+            <TabsTrigger value="profile">Profile Settings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="submit">
+            <Card className="border-2 border-border shadow-lg hover:shadow-xl smooth-transition">
           <CardHeader className="p-4 sm:p-6">
             <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
               <Send className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
@@ -317,7 +328,9 @@ const StudentDashboard = () => {
             </form>
           </CardContent>
         </Card>
+          </TabsContent>
 
+          <TabsContent value="myProblems">
         <Card className="border-2 border-border shadow-lg hover:shadow-xl smooth-transition">
           <CardHeader className="p-4 sm:p-6">
             <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
@@ -377,6 +390,12 @@ const StudentDashboard = () => {
             )}
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="profile">
+            <ProfileSettings />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Chat Components */}
